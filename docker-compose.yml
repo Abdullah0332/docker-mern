@@ -1,0 +1,62 @@
+version: "3.7"
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: node-app
+    container_name: node-app-server
+    restart: always
+    volumes:
+      - ./server/:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "5001:5001"
+    depends_on:
+      - mongo
+    env_file: ./server/.env
+    environment:
+      - MONGO_HOSTNAME=mongo-backend
+      - MONGO_PORT=27017
+      - MONGO_DB=docker-test
+    networks:
+      - app-network
+  mongo:
+    container_name: mongo-backend
+    image: mongo
+    restart: always
+    expose:
+      - "27017"
+    volumes:
+      - data-volume:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: react-app
+    container_name: react-app-client
+    command: npm start
+    volumes:
+      - ./client/:/usr/app
+      - /usr/app/node_modules
+    depends_on:
+      - server
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  data-volume:
+  node_modules:
+  web-root:
+    driver: local
